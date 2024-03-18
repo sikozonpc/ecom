@@ -73,7 +73,6 @@ func scanRowsIntoUser(rows *sql.Rows) (*types.User, error) {
 		&user.Password,
 		&user.CreatedAt,
 	)
-
 	if err != nil {
 		return nil, err
 	}

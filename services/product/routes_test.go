@@ -15,6 +15,24 @@ func TestProductServiceHandlers(t *testing.T) {
 	productStore := &mockProductStore{}
 	handler := NewHandler(productStore)
 
+	t.Run("should handle get products", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/products", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		rr := httptest.NewRecorder()
+		router := mux.NewRouter()
+
+		router.HandleFunc("/products", handler.handleGetProducts).Methods(http.MethodGet)
+
+		router.ServeHTTP(rr, req)
+
+		if rr.Code != http.StatusOK {
+			t.Errorf("expected status code %d, got %d", http.StatusOK, rr.Code)
+		}
+	})
+
 	t.Run("should fail if the product ID is not a number", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/products/abc", nil)
 		if err != nil {
@@ -112,4 +130,8 @@ func (m *mockProductStore) GetProducts() ([]*types.Product, error) {
 
 func (m *mockProductStore) CreateProduct(product types.Product) error {
 	return nil
+}
+
+func (m *mockProductStore) GetProductsByID(ids []int) ([]types.Product, error) {
+	return []types.Product{}, nil
 }
