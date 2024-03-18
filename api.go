@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/mux"
+	"github.com/sikozonpc/ecom/services/cart"
 	"github.com/sikozonpc/ecom/services/product"
 	"github.com/sikozonpc/ecom/services/user"
 )
@@ -32,14 +32,16 @@ func (s *APIServer) Run() error {
 	userHandler.RegisterRoutes(subrouter)
 
 	productStore := product.NewStore(s.db)
-	productHandler := product.NewHandler(productStore)
+	productHandler := product.NewHandler(productStore, userStore)
 	productHandler.RegisterRoutes(subrouter)
+
+	cartHandler := cart.NewHandler(productStore)
+	cartHandler.RegisterRoutes(subrouter)
 
 	// Serve static files
 	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./static")))
 
 	log.Println("Listening on", s.addr)
-	log.Println("Process PID", os.Getpid())
 
 	return http.ListenAndServe(s.addr, router)
 }

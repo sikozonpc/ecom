@@ -13,7 +13,8 @@ import (
 
 func TestProductServiceHandlers(t *testing.T) {
 	productStore := &mockProductStore{}
-	handler := NewHandler(productStore)
+	userStore := &mockUserStore{}
+	handler := NewHandler(productStore, userStore)
 
 	t.Run("should handle get products", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/products", nil)
@@ -134,4 +135,18 @@ func (m *mockProductStore) CreateProduct(product types.Product) error {
 
 func (m *mockProductStore) GetProductsByID(ids []int) ([]types.Product, error) {
 	return []types.Product{}, nil
+}
+
+type mockUserStore struct{}
+
+func (m *mockUserStore) GetUserByID(userID int) (*types.User, error) {
+	return &types.User{}, nil
+}
+
+func (m *mockUserStore) CreateUser(user types.User) error {
+	return nil
+}
+
+func (m *mockUserStore) GetUserByEmail(email string) (*types.User, error) {
+	return &types.User{}, nil
 }
