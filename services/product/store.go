@@ -70,8 +70,8 @@ func (s *Store) GetProducts() ([]*types.Product, error) {
 	return products, nil
 }
 
-func (s *Store) CreateProduct(product types.Product) error {
-	_, err := s.db.Exec("INSERT INTO products (name, price, image, description) VALUES (?, ?, ?, ?)", product.Name, product.Price, product.Image, product.Description)
+func (s *Store) CreateProduct(product types.CreateProductPayload) error {
+	_, err := s.db.Exec("INSERT INTO products (name, price, image, description, quantity) VALUES (?, ?, ?, ?, ?)", product.Name, product.Price, product.Image, product.Description, product.Quantity)
 	if err != nil {
 		return err
 	}
@@ -85,9 +85,11 @@ func scanRowsIntoProduct(rows *sql.Rows) (*types.Product, error) {
 	err := rows.Scan(
 		&product.ID,
 		&product.Name,
-		&product.Price,
-		&product.Image,
 		&product.Description,
+		&product.Image,
+		&product.Price,
+		&product.Quantity,
+		&product.CreatedAt,
 	)
 	if err != nil {
 		return nil, err

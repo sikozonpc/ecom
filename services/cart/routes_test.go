@@ -190,7 +190,7 @@ func (m *mockProductStore) GetProducts() ([]*types.Product, error) {
 	return []*types.Product{}, nil
 }
 
-func (m *mockProductStore) CreateProduct(product types.Product) error {
+func (m *mockProductStore) CreateProduct(product types.CreateProductPayload) error {
 	return nil
 }
 

@@ -63,7 +63,7 @@ func (h *Handler) handleGetProduct(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleCreateProduct(w http.ResponseWriter, r *http.Request) {
-	var product types.Product
+	var product types.CreateProductPayload
 	if err := utils.ParseJSON(r, &product); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
 		return

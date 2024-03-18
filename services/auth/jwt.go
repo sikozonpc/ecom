@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/sikozonpc/ecom/configs"
 	"github.com/sikozonpc/ecom/types"
 	"github.com/sikozonpc/ecom/utils"
 )
@@ -31,7 +31,14 @@ func WithJWTAuth(handlerFunc http.HandlerFunc, store types.UserStore) http.Handl
 		}
 
 		claims := token.Claims.(jwt.MapClaims)
-		userID := claims["userID"].(int)
+		str := claims["userID"].(string)
+
+		userID, err := strconv.Atoi(str)
+		if err != nil {
+			log.Printf("failed to convert userID to int: %v", err)
+			permissionDenied(w)
+			return
+		}
 
 		_, err = store.GetUserByID(userID)
 		if err != nil {
@@ -45,10 +52,12 @@ func WithJWTAuth(handlerFunc http.HandlerFunc, store types.UserStore) http.Handl
 	}
 }
 
-func CreateJWT(secret []byte, userID int64) (string, error) {
+func CreateJWT(secret []byte, userID int) (string, error) {
+	expiration := time.Second * time.Duration(configs.Envs.JWTExpirationInSeconds)
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"userID":    strconv.Itoa(int(userID)),
-		"expiresAt": time.Now().Add(time.Hour * 24 * 120).Unix(),
+		"expiresAt": time.Now().Add(expiration).Unix(),
 	})
 
 	tokenString, err := token.SignedString(secret)
@@ -60,14 +69,12 @@ func CreateJWT(secret []byte, userID int64) (string, error) {
 }
 
 func validateJWT(tokenString string) (*jwt.Token, error) {
-	secret := os.Getenv("JWT_SECRET")
-
 	return jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 
-		return []byte(secret), nil
+		return []byte(configs.Envs.JWTSecret), nil
 	})
 }
 

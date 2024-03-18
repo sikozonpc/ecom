@@ -38,11 +38,15 @@ func (s *Store) GetUserByEmail(email string) (*types.User, error) {
 		}
 	}
 
+	if u.ID == 0 {
+		return nil, fmt.Errorf("user not found")
+	}
+
 	return u, nil
 }
 
 func (s *Store) GetUserByID(id int) (*types.User, error) {
-	rows, err := s.db.Query("SELECT * FROM users WHERE id = ? AND isActive = 1", id)
+	rows, err := s.db.Query("SELECT * FROM users WHERE id = ?", id)
 	if err != nil {
 		return nil, err
 	}
