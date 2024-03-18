@@ -15,6 +15,7 @@ type Config struct {
 	DBPassword string
 	DBAddress  string
 	DBName     string
+	JWTSecret  string
 }
 
 var Envs = initConfig()
@@ -24,7 +25,7 @@ func initConfig() Config {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	
+
 	return Config{
 		PublicHost: getEnv("PUBLIC_HOST", "http://localhost"),
 		Port:       getEnv("PORT", "8080"),
@@ -32,6 +33,7 @@ func initConfig() Config {
 		DBPassword: getEnv("DB_PASSWORD", "mypassword"),
 		DBAddress:  fmt.Sprintf("%s:%s", getEnv("DB_HOST", "127.0.0.1"), getEnv("DB_PORT", "3306")),
 		DBName:     getEnv("DB_NAME", "ecom"),
+		JWTSecret:  getEnv("JWT_SECRET", "not-so-secret-now-is-it?"),
 	}
 }
 
