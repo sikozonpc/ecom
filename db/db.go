@@ -4,11 +4,12 @@ import (
 	"database/sql"
 	"log"
 
-	"github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql" // mysql driver
+	"github.com/sikozonpc/ecom/configs"
 )
 
-func NewMySQLStorage(cfg mysql.Config) (*sql.DB, error) {
-	db, err := sql.Open("mysql", cfg.FormatDSN())
+func NewMySQLStorage() (*sql.DB, error) {
+	db, err := sql.Open("mysql", configs.Envs.GetDBConnectionString())
 	if err != nil {
 		log.Fatal(err)
 	}

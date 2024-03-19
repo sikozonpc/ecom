@@ -4,26 +4,15 @@ import (
 	"log"
 	"os"
 
-	"github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/golang-migrate/migrate/v4"
 	mysqlMigrate "github.com/golang-migrate/migrate/v4/database/mysql"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/sikozonpc/ecom/configs"
 	"github.com/sikozonpc/ecom/db"
 )
 
 func main() {
-	cfg := mysql.Config{
-		User:                 configs.Envs.DBUser,
-		Passwd:               configs.Envs.DBPassword,
-		Addr:                 configs.Envs.DBAddress,
-		DBName:               configs.Envs.DBName,
-		Net:                  "tcp",
-		AllowNativePasswords: true,
-		ParseTime:            true,
-	}
-
-	db, err := db.NewMySQLStorage(cfg)
+	db, err := db.NewMySQLStorage()
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -39,7 +39,7 @@ func (s *APIServer) Run() error {
 	cartHandler.RegisterRoutes(subrouter)
 
 	// Serve static files
-	router.PathPrefix("/").Handler(http.FileServer(http.Dir("./static")))
+	router.PathPrefix("/").Handler(http.FileServer(http.Dir("static")))
 
 	log.Println("Listening on", s.addr)
 
