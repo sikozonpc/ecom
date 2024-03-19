@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/sikozonpc/ecom/services/cart"
+	"github.com/sikozonpc/ecom/services/order"
 	"github.com/sikozonpc/ecom/services/product"
 	"github.com/sikozonpc/ecom/services/user"
 )
@@ -35,7 +36,9 @@ func (s *APIServer) Run() error {
 	productHandler := product.NewHandler(productStore, userStore)
 	productHandler.RegisterRoutes(subrouter)
 
-	cartHandler := cart.NewHandler(productStore)
+	orderStore := order.NewStore(s.db)
+
+	cartHandler := cart.NewHandler(productStore, orderStore, userStore)
 	cartHandler.RegisterRoutes(subrouter)
 
 	// Serve static files

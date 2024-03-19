@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,6 +13,10 @@ import (
 	"github.com/sikozonpc/ecom/types"
 	"github.com/sikozonpc/ecom/utils"
 )
+
+type contextKey string
+
+const UserKey contextKey = "userID"
 
 func WithJWTAuth(handlerFunc http.HandlerFunc, store types.UserStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -40,12 +45,17 @@ func WithJWTAuth(handlerFunc http.HandlerFunc, store types.UserStore) http.Handl
 			return
 		}
 
-		_, err = store.GetUserByID(userID)
+		u, err := store.GetUserByID(userID)
 		if err != nil {
 			log.Printf("failed to get user by id: %v", err)
 			permissionDenied(w)
 			return
 		}
+
+		// Add the user to the context
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, UserKey, u.ID)
+		r = r.WithContext(ctx)
 
 		// Call the function if the token is valid
 		handlerFunc(w, r)
@@ -80,4 +90,13 @@ func validateJWT(tokenString string) (*jwt.Token, error) {
 
 func permissionDenied(w http.ResponseWriter) {
 	utils.WriteError(w, http.StatusForbidden, fmt.Errorf("permission denied"))
+}
+
+func GetUserIDFromContext(ctx context.Context) int {
+	userID, ok := ctx.Value(UserKey).(int)
+	if !ok {
+		return -1
+	}
+
+	return userID
 }

@@ -94,6 +94,7 @@ func TestProductServiceHandlers(t *testing.T) {
 			Price:       100,
 			Image:       "test.jpg",
 			Description: "test description",
+			Quantity:    10,
 		}
 
 		marshalled, err := json.Marshal(payload)
@@ -130,6 +131,10 @@ func (m *mockProductStore) GetProducts() ([]*types.Product, error) {
 }
 
 func (m *mockProductStore) CreateProduct(product types.CreateProductPayload) error {
+	return nil
+}
+
+func (m *mockProductStore) UpdateProduct(product types.Product) error {
 	return nil
 }
 

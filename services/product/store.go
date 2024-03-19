@@ -2,6 +2,8 @@ package product
 
 import (
 	"database/sql"
+	"fmt"
+	"strings"
 
 	"github.com/sikozonpc/ecom/types"
 )
@@ -32,7 +34,16 @@ func (s *Store) GetProductByID(productID int) (*types.Product, error) {
 }
 
 func (s *Store) GetProductsByID(productIDs []int) ([]types.Product, error) {
-	rows, err := s.db.Query("SELECT * FROM products WHERE id IN (?)", productIDs)
+	placeholders := strings.Repeat(",?", len(productIDs)-1)
+	query := fmt.Sprintf("SELECT * FROM products WHERE id IN (?%s)", placeholders)
+
+	// Convert productIDs to []interface{}
+	args := make([]interface{}, len(productIDs))
+	for i, v := range productIDs {
+		args[i] = v
+	}
+
+	rows, err := s.db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -72,6 +83,15 @@ func (s *Store) GetProducts() ([]*types.Product, error) {
 
 func (s *Store) CreateProduct(product types.CreateProductPayload) error {
 	_, err := s.db.Exec("INSERT INTO products (name, price, image, description, quantity) VALUES (?, ?, ?, ?, ?)", product.Name, product.Price, product.Image, product.Description, product.Quantity)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Store) UpdateProduct(product types.Product) error {
+	_, err := s.db.Exec("UPDATE products SET name = ?, price = ?, image = ?, description = ?, quantity = ? WHERE id = ?", product.Name, product.Price, product.Image, product.Description, product.Quantity, product.ID)
 	if err != nil {
 		return err
 	}

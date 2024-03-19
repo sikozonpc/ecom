@@ -5,13 +5,24 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/sikozonpc/ecom/cmd/api"
 	"github.com/sikozonpc/ecom/configs"
 	"github.com/sikozonpc/ecom/db"
 )
 
 func main() {
-	db, err := db.NewMySQLStorage()
+		cfg := mysql.Config{
+		User:                 configs.Envs.DBUser,
+		Passwd:               configs.Envs.DBPassword,
+		Addr:                 configs.Envs.DBAddress,
+		DBName:               configs.Envs.DBName,
+		Net:                  "tcp",
+		AllowNativePasswords: true,
+		ParseTime:            true,
+	}
+
+	db, err := db.NewMySQLStorage(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}

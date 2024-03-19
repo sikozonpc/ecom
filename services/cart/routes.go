@@ -6,23 +6,36 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
+	"github.com/sikozonpc/ecom/services/auth"
 	"github.com/sikozonpc/ecom/types"
 	"github.com/sikozonpc/ecom/utils"
 )
 
 type Handler struct {
-	store types.ProductStore
+	store      types.ProductStore
+	orderStore types.OrderStore
+	userStore  types.UserStore
 }
 
-func NewHandler(store types.ProductStore) *Handler {
-	return &Handler{store: store}
+func NewHandler(
+	store types.ProductStore,
+	orderStore types.OrderStore,
+	userStore types.UserStore,
+) *Handler {
+	return &Handler{
+		store:      store,
+		orderStore: orderStore,
+		userStore:  userStore,
+	}
 }
 
 func (h *Handler) RegisterRoutes(router *mux.Router) {
-	router.HandleFunc("/cart/checkout", h.handleCheckout).Methods(http.MethodPost)
+	router.HandleFunc("/cart/checkout", auth.WithJWTAuth(h.handleCheckout, h.userStore)).Methods(http.MethodPost)
 }
 
 func (h *Handler) handleCheckout(w http.ResponseWriter, r *http.Request) {
+	userID := auth.GetUserIDFromContext(r.Context())
+	
 	var cart types.CartCheckoutPayload
 	if err := utils.ParseJSON(r, &cart); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
@@ -48,22 +61,14 @@ func (h *Handler) handleCheckout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// create a map of products for easier access
-	productsMap := make(map[int]types.Product)
-	for _, product := range products {
-		productsMap[product.ID] = product
-	}
-
-	// check if all products are available
-	if err := checkIfCartIsInStock(cart.Items, productsMap); err != nil {
+	orderID, totalPrice, err := h.createOrder(products, cart.Items, userID)
+	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, err)
 		return
 	}
 
-	// calculate total price
-	totalPrice := calculateTotalPrice(cart.Items, productsMap)
-
 	utils.WriteJSON(w, http.StatusOK, map[string]interface{}{
 		"total_price": totalPrice,
+		"order_id":    orderID,
 	})
 }

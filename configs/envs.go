@@ -57,7 +57,3 @@ func getEnvAsInt(key string, fallback int64) int64 {
 
 	return fallback
 }
-
-func (c Config) GetDBConnectionString() string {
-	return fmt.Sprintf("%s:%s@tcp(%s)/%s", c.DBUser, c.DBPassword, c.DBAddress, c.DBName)
-}
