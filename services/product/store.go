@@ -17,7 +17,7 @@ func NewStore(db *sql.DB) *Store {
 }
 
 func (s *Store) GetProductByID(productID int) (*types.Product, error) {
-	rows, err := s.db.Query("SELECT * FROM products WHERE id = ?", productID)
+	rows, err := s.db.Query("SELECT p.id, p.name, p.description, p.image, p.price, pq.quantity, p.createdat FROM products p join productquantity pq on p.id = pq.id WHERE p.id = ?", productID)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func (s *Store) GetProductByID(productID int) (*types.Product, error) {
 
 func (s *Store) GetProductsByID(productIDs []int) ([]types.Product, error) {
 	placeholders := strings.Repeat(",?", len(productIDs)-1)
-	query := fmt.Sprintf("SELECT * FROM products WHERE id IN (?%s)", placeholders)
+	query := fmt.Sprintf("SELECT p.id, p.name, p.description, p.image, p.price, pq.quantity, p.createdat FROM products p join productquantity pq on p.id = pq.id WHERE p.id IN (?%s)", placeholders)
 
 	// Convert productIDs to []interface{}
 	args := make([]interface{}, len(productIDs))
@@ -63,7 +63,7 @@ func (s *Store) GetProductsByID(productIDs []int) ([]types.Product, error) {
 }
 
 func (s *Store) GetProducts() ([]*types.Product, error) {
-	rows, err := s.db.Query("SELECT * FROM products")
+	rows, err := s.db.Query("SELECT p.id, p.name, p.description, p.image, p.price, pq.quantity, p.createdat FROM products p join productquantity pq on p.id = pq.id")
 	if err != nil {
 		return nil, err
 	}
@@ -82,8 +82,33 @@ func (s *Store) GetProducts() ([]*types.Product, error) {
 }
 
 func (s *Store) CreateProduct(product types.CreateProductPayload) error {
-	_, err := s.db.Exec("INSERT INTO products (name, price, image, description, quantity) VALUES (?, ?, ?, ?, ?)", product.Name, product.Price, product.Image, product.Description, product.Quantity)
+	
+	// transaction to add product and quantity together
+	tx, err := s.db.Begin()
 	if err != nil {
+		return err
+	}
+
+	res, err := tx.Exec("INSERT INTO products (name, price, image, description) VALUES (?, ?, ?, ?)", product.Name, product.Price, product.Image, product.Description)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	productID, err := res.LastInsertId()
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	_, err = tx.Exec("INSERT INTO productquantity (id, quantity) VALUES (?, ?)", productID, product.Quantity)
+
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
 		return err
 	}
 
@@ -91,11 +116,47 @@ func (s *Store) CreateProduct(product types.CreateProductPayload) error {
 }
 
 func (s *Store) UpdateProduct(product types.Product) error {
-	_, err := s.db.Exec("UPDATE products SET name = ?, price = ?, image = ?, description = ?, quantity = ? WHERE id = ?", product.Name, product.Price, product.Image, product.Description, product.Quantity, product.ID)
+
+	tx, err := s.db.Begin()
 	if err != nil {
 		return err
 	}
 
+
+	_, err = tx.Exec("UPDATE products SET name = ?, price = ?, image = ?, description = ? WHERE id = ?", product.Name, product.Price, product.Image, product.Description, product.ID)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	_, err = tx.Exec("UPDATE productquantity SET quantity = ? WHERE id = ?", product.Quantity, product.ID)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Store) UpdateProductQuantity(product types.Product) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec("UPDATE productquantity SET quantity = ? WHERE id = ?", product.Quantity, product.ID)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
 	return nil
 }
 

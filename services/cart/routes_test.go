@@ -203,6 +203,10 @@ func (m *mockProductStore) UpdateProduct(product types.Product) error {
 	return nil
 }
 
+func (m *mockProductStore) UpdateProductQuantity(product types.Product) error {
+	return nil
+}
+
 type mockOrderStore struct{}
 
 func (m *mockOrderStore) CreateOrder(order types.Order) (int, error) {

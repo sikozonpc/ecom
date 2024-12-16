@@ -60,6 +60,7 @@ type ProductStore interface {
 	GetProducts() ([]*Product, error)
 	CreateProduct(CreateProductPayload) error
 	UpdateProduct(Product) error
+	UpdateProductQuantity(Product) error
 }
 
 type OrderStore interface {

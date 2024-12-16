@@ -68,7 +68,7 @@ func (h *Handler) createOrder(products []types.Product, cartItems []types.CartCh
 	for _, item := range cartItems {
 		product := productsMap[item.ProductID]
 		product.Quantity -= item.Quantity
-		h.store.UpdateProduct(product)
+		h.store.UpdateProductQuantity(product)
 	}
 
 	// create order record

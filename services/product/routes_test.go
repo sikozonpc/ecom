@@ -142,6 +142,10 @@ func (m *mockProductStore) GetProductsByID(ids []int) ([]types.Product, error) {
 	return []types.Product{}, nil
 }
 
+func (m *mockProductStore) UpdateProductQuantity(product types.Product) error {
+	return nil
+}
+
 type mockUserStore struct{}
 
 func (m *mockUserStore) GetUserByID(userID int) (*types.User, error) {
