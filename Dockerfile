@@ -1,26 +1,25 @@
 # syntax=docker/dockerfile:1
 
-# Build the application from source
-FROM golang:1.22.0 AS build-stage
-  WORKDIR /app
+FROM golang:1.23 AS builder
+WORKDIR /app
 
-  COPY go.mod go.sum ./
-  RUN go mod download
+COPY go.mod go.sum ./
+RUN go mod download
 
-  COPY . .
+COPY . .
 
-  RUN CGO_ENABLED=0 GOOS=linux go build -o /api ./cmd/main.go
+# Build both api and migrate
+RUN CGO_ENABLED=0 GOOS=linux go build -o /api ./cmd/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o /migrate ./cmd/migrate/main.go
 
-  # Run the tests in the container
-FROM build-stage AS run-test-stage
-  RUN go test -v ./...
+# Final image
+FROM alpine:latest
 
-# Deploy the application binary into a lean image
-FROM scratch AS build-release-stage
-  WORKDIR /
+WORKDIR /
 
-  COPY --from=build-stage /api /api
+COPY --from=builder /api /api
+COPY --from=builder /migrate /migrate
+COPY cmd/migrate/migrations /migrations 
 
-  EXPOSE 8080
-
-  ENTRYPOINT ["/api"]
+EXPOSE 8080
+ENTRYPOINT ["/bin/sh", "-c", "/migrate up && /api"]

@@ -67,3 +67,11 @@ func (m *mockUserStore) CreateUser(u types.User) error {
 func (m *mockUserStore) GetUserByID(id int) (*types.User, error) {
 	return &types.User{}, nil
 }
+
+func (m *mockUserStore) GetOrdersByUserID(userID int) ([]types.Order, error) {
+	return []types.Order{}, nil
+}
+
+func (m *mockUserStore) GetOrderItemByOrderID(orderID int) ([]types.OrderItem, error){
+	return []types.OrderItem{}, nil
+}

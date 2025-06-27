@@ -23,6 +23,7 @@ func WithJWTAuth(handlerFunc http.HandlerFunc, store types.UserStore) http.Handl
 		tokenString := utils.GetTokenFromRequest(r)
 
 		token, err := validateJWT(tokenString)
+		fmt.Println(token)
 		if err != nil {
 			log.Printf("failed to validate token: %v", err)
 			permissionDenied(w)

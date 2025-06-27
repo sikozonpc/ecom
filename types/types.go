@@ -1,6 +1,7 @@
 package types
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -10,6 +11,7 @@ type User struct {
 	LastName  string    `json:"lastName"`
 	Email     string    `json:"email"`
 	Password  string    `json:"-"`
+	Address   string    `json:"address"` //workinprogress
 	CreatedAt time.Time `json:"createdAt"`
 }
 
@@ -30,6 +32,18 @@ type CartCheckoutItem struct {
 	Quantity  int `json:"quantity"`
 }
 
+type OrderItem struct {
+	ID        int       `json:"id"`
+	OrderID   int       `json:"orderID"`
+	Name      string    `json:"name"`
+	Image     string    `json:"image"`
+	ProductID int       `json:"productID"`
+	Quantity  int       `json:"quantity"`
+	Price     float64   `json:"price"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+// aggregate
 type Order struct {
 	ID        int       `json:"id"`
 	UserID    int       `json:"userID"`
@@ -39,19 +53,21 @@ type Order struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-type OrderItem struct {
-	ID        int       `json:"id"`
-	OrderID   int       `json:"orderID"`
-	ProductID int       `json:"productID"`
-	Quantity  int       `json:"quantity"`
-	Price     float64   `json:"price"`
-	CreatedAt time.Time `json:"createdAt"`
+// contains the order history
+type OrderHistory struct {
+	Orders []Order `json:"orders"`
 }
-
+type DBExecutor interface {
+	Exec(query string, args ...any) (sql.Result, error)
+	Query(query string, args ...any) (*sql.Rows, error)
+	QueryRow(query string, args ...any) *sql.Row
+}
 type UserStore interface {
 	GetUserByEmail(email string) (*User, error)
 	GetUserByID(id int) (*User, error)
 	CreateUser(User) error
+	GetOrderItemByOrderID(id int) ([]OrderItem, error)
+	GetOrdersByUserID(userID int) ([]Order, error)
 }
 
 type ProductStore interface {
@@ -65,6 +81,8 @@ type ProductStore interface {
 type OrderStore interface {
 	CreateOrder(Order) (int, error)
 	CreateOrderItem(OrderItem) error
+	GetOrdersByID(orderID int) (Order, error)
+	UpdateOrderStatus(orderID int, status string) error
 }
 type CreateProductPayload struct {
 	Name        string  `json:"name" validate:"required"`
@@ -79,6 +97,7 @@ type RegisterUserPayload struct {
 	LastName  string `json:"lastName" validate:"required"`
 	Email     string `json:"email" validate:"required,email"`
 	Password  string `json:"password" validate:"required,min=3,max=130"`
+	Address   string `json:"address" validate:"required"` //address on signup where product will be deliverd to
 }
 
 type LoginUserPayload struct {
@@ -88,4 +107,7 @@ type LoginUserPayload struct {
 
 type CartCheckoutPayload struct {
 	Items []CartCheckoutItem `json:"items" validate:"required"`
+	//address to be provided on check out or if the user
+	//wan to use the same address as they signed up with
+	Address string `json:"address"`
 }

@@ -1,7 +1,10 @@
 package user
 
 import (
+	"database/sql"
+	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -27,6 +30,11 @@ func (h *Handler) RegisterRoutes(router *mux.Router) {
 
 	// admin routes
 	router.HandleFunc("/users/{userID}", auth.WithJWTAuth(h.handleGetUser, h.store)).Methods(http.MethodGet)
+	//view all orders
+	router.HandleFunc("/users/{userID}/orders", auth.WithJWTAuth(h.getUserOrdersHandler, h.store))
+	//toview individual procut in an order
+	router.HandleFunc("/users/orders/{orderID}", auth.WithJWTAuth(h.getSingleOrderHandler, h.store))
+
 }
 
 func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
@@ -95,13 +103,14 @@ func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		LastName:  user.LastName,
 		Email:     user.Email,
 		Password:  hashedPassword,
+		Address:   user.Address,
 	})
 	if err != nil {
 		utils.WriteError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusCreated, nil)
+	utils.WriteJSON(w, http.StatusCreated, "you can login now")
 }
 
 func (h *Handler) handleGetUser(w http.ResponseWriter, r *http.Request) {
@@ -126,3 +135,33 @@ func (h *Handler) handleGetUser(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSON(w, http.StatusOK, user)
 }
+
+func (h *Handler) getUserOrdersHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	str, ok := vars["userID"]
+	if !ok {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("missing user ID"))
+		return
+	}
+
+	userID, err := strconv.Atoi(str)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid user ID"))
+		return
+	}
+
+	orders, err := h.store.GetOrdersByUserID(userID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			utils.WriteError(w, http.StatusInternalServerError, fmt.Errorf("user has made no order yet"))
+			return
+		}
+		log.Println(err)
+		utils.WriteError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
+		return
+	}
+	utils.WriteJSON(w, http.StatusOK, orders)
+
+}
+
+func (h *Handler) getSingleOrderHandler(w http.ResponseWriter, r *http.Request) {}

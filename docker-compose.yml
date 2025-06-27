@@ -1,25 +1,26 @@
-version: '3'
-services:
+version: '3.9'  # Compose v2+ required for condition: service_healthy
 
+services:
   db:
-    image: mysql:8.0
-    healthcheck:
-      test: "exit 0"
-    volumes:
-      - db_data:/var/lib/mysql
+    image: mysql:latest
     ports:
       - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: mypassword
       MYSQL_DATABASE: ecom
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   api:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     restart: on-failure
-    volumes:
-      - .:/go/src/api
     ports:
       - "8080:8080"
     environment:
@@ -27,10 +28,9 @@ services:
       DB_USER: root
       DB_PASSWORD: mypassword
       DB_NAME: ecom
-    links:
-      - db
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
 volumes:
   db_data:

@@ -22,7 +22,7 @@ var mockProducts = []types.Product{
 func TestCartServiceHandler(t *testing.T) {
 	productStore := &mockProductStore{}
 	orderStore := &mockOrderStore{}
-	handler := NewHandler(productStore, orderStore, nil)
+	handler := NewHandler(productStore, orderStore, nil, nil)
 
 	t.Run("should fail to checkout if the cart items do not exist", func(t *testing.T) {
 		payload := types.CartCheckoutPayload{
@@ -210,5 +210,12 @@ func (m *mockOrderStore) CreateOrder(order types.Order) (int, error) {
 }
 
 func (m *mockOrderStore) CreateOrderItem(orderItem types.OrderItem) error {
+	return nil
+}
+func (m *mockOrderStore) GetOrdersByID(orderID int) (types.Order, error) {
+	return types.Order{}, nil
+}
+
+func (s *mockOrderStore) UpdateOrderStatus(orderID int, status string) error {
 	return nil
 }
