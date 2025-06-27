@@ -9,6 +9,7 @@ import (
 	"github.com/sikozonpc/ecom/services/cart"
 	"github.com/sikozonpc/ecom/services/order"
 	"github.com/sikozonpc/ecom/services/product"
+	txManager "github.com/sikozonpc/ecom/services/txmanager"
 	"github.com/sikozonpc/ecom/services/user"
 )
 
@@ -37,8 +38,9 @@ func (s *APIServer) Run() error {
 	productHandler.RegisterRoutes(subrouter)
 
 	orderStore := order.NewStore(s.db)
+	trxManager := txManager.NewTrxManager(s.db)
 
-	cartHandler := cart.NewHandler(productStore, orderStore, userStore)
+	cartHandler := cart.NewHandler(productStore, orderStore, userStore, trxManager)
 	cartHandler.RegisterRoutes(subrouter)
 
 	// Serve static files

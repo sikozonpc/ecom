@@ -9,10 +9,10 @@ import (
 )
 
 type Store struct {
-	db *sql.DB
+	db types.DBExecutor
 }
 
-func NewStore(db *sql.DB) *Store {
+func NewStore(db types.DBExecutor) *Store {
 	return &Store{db: db}
 }
 

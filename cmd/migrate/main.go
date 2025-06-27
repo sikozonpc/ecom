@@ -35,10 +35,11 @@ func main() {
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(
-		"file://cmd/migrate/migrations",
+		"file://cmd/migrate/migrations", // absolute path inside Docker
 		"mysql",
 		driver,
 	)
+
 	if err != nil {
 		log.Fatal(err)
 	}
